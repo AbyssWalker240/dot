@@ -1,6 +1,6 @@
 # dot
 
-Todo list written in python, 
+CLI todo list written in python
 
 ## planned features/commands
 
