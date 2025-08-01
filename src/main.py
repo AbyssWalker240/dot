@@ -173,29 +173,21 @@ def parse():
 
 
 def parseDate(string):
+    if(string == ""):
+        return "NONE"
+        
     date = dateparser.parse(string)
-    print(date)
     if date:
         return date.strftime("%Y-%m-%d %H:%M:%S")
     else:
         error("Could not parse date")
 
-def valiDate():
-    global dueIn
-
-    dueIn = parseDate(dueIn)
-
-
-def valIDate():
-    pass
-
 
 def validateData():
-    global idIn
     global messageIn
     global tagsIn
 
-    if not (type(idIn) is int and type(messageIn) is str and type(tagsIn) is list and type(dueIn) is str):
+    if not (type(messageIn) is str and type(tagsIn) is list):
         error("Incorrect argument types")
 
     if("|" in messageIn):
@@ -206,21 +198,70 @@ def validateData():
             error("Reserved character '|' used")
 
 
-def checkId(file,id):
-    pass
+def readFile(file):
+    with open(file, 'r') as f:
+        return f.readlines()
 
 
-def readFile():
-    pass
+def writeFile(file,buffer):
+    with open(file, 'w') as f:
+        f.writelines(buffer)
 
 
-def editEntry():
-    pass
+def valIDate(file,id):
+    lines = readFile(file)
+    
+    try:
+        id = int(id)
+    except TypeError:
+        error("Invalid type, id must be an integer")
+
+    if(id <= len(lines) and id > 0):
+        return id
+    else:
+        error("Invalid id")
+
+
+def editEntry(file,id,message,tags,due):
+    id = valIDate(file, id)
+    due = parseDate(due)
+    buffer = readFile(file)
+
+    id = id - 1
+    buffer[id] = f"{message}|{tags}|{due}\n"
+
+    writeFile(file,buffer)
+
+
+def deleteEntry(file,id):
+    id = valIDate(file,id)
+    buffer = readFile(file)
+
+    id = id - 1
+    del buffer[id]
+
+    writeFile(file,buffer)
+
+
+def parseLine(line):
+    return line
+
+
+def completeEntry(file,historyFile,id):
+    id = valIDate(file,id)
+    buffer = readFile(file)
+
+    deleteEntry(file,id)
+
+    print(parseLine(buffer[id-1])) # parseLine() parses the line and gathers message, tags, and due
 
 
 def addEntry(file,message,tags,due):
+    due = parseDate(due)
+    buffer = f"{message}|{tags}|{due}\n"
+
     with open(file, 'a') as f:
-        f.write(message)
+        f.write(buffer)
 
 
 # framework
@@ -231,10 +272,16 @@ validateData()
 
 rich.print(f"[green]operation {operationIn}\nid {idIn}\ntags {tagsIn}\ndue {dueIn}\nlist {listIn}")
 rich.print(f"[bright_green]message {messageIn}")
-print(isList)
-print(isHistoryList)
-print(listOperation)
+# print(isList)
+# print(isHistoryList)
+# print(listOperation)
 
 match operationIn:
     case "add":
         addEntry(TASK_FILE,messageIn,tagsIn,dueIn)
+    case "done":
+        completeEntry(TASK_FILE,HISTORY_FILE,idIn)
+    case "delete":
+        deleteEntry(TASK_FILE,idIn)
+    case "edit":
+        editEntry(TASK_FILE,idIn,messageIn,tagsIn,dueIn)
