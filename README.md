@@ -10,7 +10,14 @@ dot done   \[id\]
 dot delete \[id\]
 dot edit   \[id\] "" @ -d \[date\]
 
-dot list \[done|soon|due|overdue\] @
+dot list \[all|done|due|overdue\] @
+
+dot history add            ""
+dot history restore \[id\]
+dot history delete  \[id\]
+dot history edit    \[id\] "" @ -d \[date\]
+
+dot history list \[all|on-time|overdue\] @
 ```
 
 ## dependencies

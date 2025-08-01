@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# SHARE_DIR="$HOME/.local/share/dot" # for release, use this to organize files to run, for now use myGit
+
+python3 "$HOME/myGit/dot/src/main.py" "$@"
