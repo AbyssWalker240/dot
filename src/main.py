@@ -54,8 +54,25 @@ def parse():
     args = sys.argv
     rich.print(f"[bright_black]{args}")
 
-    # parse all tags and dates
+    # parse and remove optional arguments
+    for i in range(len(args) - 1, -1, -1):
+        if(args[i].startswith("@")):
+            tagsIn.append(args[i])
+            del args[i]
+        elif(args[i] == "-d"):
+            dueIn = getItem(args,i+1)
+            del args[i:i+2]
+    tagsIn.reverse()
+        
     
+    # list if no arguments
+    if(len(args) == 1):
+        isList = True
+        listOperation = "all"
+        return
+    
+
+    # parse operation
     if(getItem(args,1) == "history"):
         operationIn = f"{args[1]} {getItem(args,2)}"
         del args[1:3]
@@ -106,6 +123,8 @@ def parse():
         case _:
             error("Invalid operation")
 
+
+    # parse list operation
     if isList:
         match listOperation:
             case "all":
@@ -129,16 +148,6 @@ def parse():
             case _:
                 error("Invalid list operation")
 
-    # while(len(args) > 1):
-    #     match args[1]:
-    #         case tag if tag.startswith("@"):
-    #             tagsIn.append(tag)
-    #             del args[1]
-    #         case "-d":
-    #             dueIn = getItem(args,2)
-    #             del args[1:3]
-    #         case _:
-    #             error("Unrecognized flag")
 
 
 # framework
@@ -147,3 +156,6 @@ parse()
 
 rich.print(f"[green]operation {operationIn}\nid {idIn}\ntags {tagsIn}\ndue {dueIn}\nlist {listIn}")
 rich.print(f"[bright_green]message {messageIn}")
+print(isList)
+print(isHistoryList)
+print(listOperation)
