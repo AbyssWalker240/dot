@@ -12,10 +12,8 @@ dot edit   \[id\] "" @ -d \[date\]
 
 dot list \[all|done|due|overdue\] @
 
-dot history add            ""
 dot history restore \[id\]
 dot history delete  \[id\]
-dot history edit    \[id\] "" @ -d \[date\]
 
 dot history list \[all|on-time|overdue\] @
 ```
@@ -23,8 +21,9 @@ dot history list \[all|on-time|overdue\] @
 ## dependencies
 
 ### archlinux
-* python3     (core)
-* python-rich (extra)
+* python3           (core)
+* python-rich       (extra)
+* python-dateparser (extra)
 
 ## installation
 

@@ -1,17 +1,47 @@
 # imports
 import sys
+import datetime
+import dateparser
 
+from pathlib import Path
 from rich.console import Console
 
 
-# initializations
+# initializations and constants
 rich = Console()
 
+HOME = Path.home()
+TASK_FILE = f"{HOME}/.dot/dotfile"
+HISTORY_FILE = f"{HOME}/.dot/dothistory"
 
 # defintions
 
 def help():
-    print("help!")
+    rich.print("[reverse bold] dot [/reverse bold] todo list")
+    rich.print("\nby [bright_blue underline]https://github.com/AbyssWalker240\n")
+
+    rich.print("Available operations[bright_green bold]:\n")
+    
+    rich.print("[bright_white]  dot add [bright_green bold]<message> [not bold white]\\[@one @or @more @tags] \\[-d [green]<date>[/green]]")
+    rich.print("[white]    [bright_green bold]-[/bright_green bold] add a new entry")
+    rich.print("[bright_white]  dot done [bright_green bold]<id>")
+    rich.print("[white]    [bright_green bold]-[/bright_green bold] complete an entry and move to history")
+    rich.print("[bright_white]  dot delete [bright_green bold]<id>")
+    rich.print("[white]    [bright_green bold]-[/bright_green bold] delete an entry")
+    rich.print("[bright_white]  dot edit [bright_green bold]<id> <message> [not bold white]\\[@one @or @more @tags] \\[-d [green]<date>[/green]]")
+    rich.print("[white]    [bright_green bold]-[/bright_green bold] edit details of an entry")
+    rich.print("[bright_white]  dot [not bold white]list \\[all|done|due|overdue] \\[@one @or @more @tags]")
+    rich.print("[white]    [bright_green bold]-[/bright_green bold] list entries based on details\n")
+
+    rich.print("[bright_white]  dot history restore [bright_green bold]<id>")
+    rich.print("[white]    [bright_green bold]-[/bright_green bold] restore/uncomplete an entry")
+    rich.print("[bright_white]  dot history delete [bright_green bold]<id>")
+    rich.print("[white]    [bright_green bold]-[/bright_green bold] delete an entry from history")
+    rich.print("[bright_white]  dot history [not bold white]list \\[all|on-time|overdue] \\[@one @or @more @tags]")
+    rich.print("[white]    [bright_green bold]-[/bright_green bold] list entry history based on details\n")
+
+    rich.print("[bright_yellow bold]Note: [bright_white not bold]no message or tag may contain a pipe [b]|[/b] symbol\n")
+    
 
 def error(message):
     message = message+"\n'list help' for help"
@@ -52,7 +82,6 @@ def parse():
     global listOperation
     
     args = sys.argv
-    rich.print(f"[bright_black]{args}")
 
     # parse and remove optional arguments
     for i in range(len(args) - 1, -1, -1):
@@ -67,6 +96,7 @@ def parse():
     
     # list if no arguments
     if(len(args) == 1):
+        operationIn = "list"
         isList = True
         listOperation = "all"
         return
@@ -74,7 +104,7 @@ def parse():
 
     # parse operation
     if(getItem(args,1) == "history"):
-        operationIn = f"{args[1]} {getItem(args,2)}"
+        operationIn = f"{args[1]} {getItemContinue(args,2,"list")}"
         del args[1:3]
     else:
         operationIn = args[1]
@@ -102,19 +132,12 @@ def parse():
             listOperation = getItemContinue(args,1,"all")
             if(len(args) > 1):
                 del args[1]
-        case "history add":
-            messageIn = getItem(args,1)
-            del args[1]
         case "history restore":
             idIn = getItem(args,1)
             del args[1]
         case "history delete":
             idIn = getItem(args,1)
             del args[1]
-        case "history edit":
-            idIn = getItem(args,1)
-            messageIn = getItem(args,2)
-            del args[1:3]
         case "history list":
             isHistoryList = True
             listOperation = getItemContinue(args,1,"all")
@@ -149,13 +172,69 @@ def parse():
                 error("Invalid list operation")
 
 
+def parseDate(string):
+    date = dateparser.parse(string)
+    print(date)
+    if date:
+        return date.strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        error("Could not parse date")
+
+def valiDate():
+    global dueIn
+
+    dueIn = parseDate(dueIn)
+
+
+def valIDate():
+    pass
+
+
+def validateData():
+    global idIn
+    global messageIn
+    global tagsIn
+
+    if not (type(idIn) is int and type(messageIn) is str and type(tagsIn) is list and type(dueIn) is str):
+        error("Incorrect argument types")
+
+    if("|" in messageIn):
+        error("Reserved character '|' used")
+
+    for tag in tagsIn:
+        if("|" in tag):
+            error("Reserved character '|' used")
+
+
+def checkId(file,id):
+    pass
+
+
+def readFile():
+    pass
+
+
+def editEntry():
+    pass
+
+
+def addEntry(file,message,tags,due):
+    with open(file, 'a') as f:
+        f.write(message)
+
 
 # framework
 
 parse()
+
+validateData()
 
 rich.print(f"[green]operation {operationIn}\nid {idIn}\ntags {tagsIn}\ndue {dueIn}\nlist {listIn}")
 rich.print(f"[bright_green]message {messageIn}")
 print(isList)
 print(isHistoryList)
 print(listOperation)
+
+match operationIn:
+    case "add":
+        addEntry(TASK_FILE,messageIn,tagsIn,dueIn)
