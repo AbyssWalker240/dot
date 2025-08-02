@@ -2,6 +2,7 @@
 import sys
 import datetime
 import dateparser
+import contextlib
 
 from pathlib import Path
 from rich.console import Console
@@ -173,10 +174,11 @@ def parse():
 
 
 def parseDate(string):
-    if(string == ""):
+    if(string == "" or string == "NONE"):
         return "NONE"
-        
-    date = dateparser.parse(string)
+
+    with contextlib.redirect_stderr(None): # ignore error I dont understand
+        date = dateparser.parse(string)
     if date:
         return date.strftime("%Y-%m-%d %H:%M:%S")
     else:
@@ -208,6 +210,13 @@ def writeFile(file,buffer):
         f.writelines(buffer)
 
 
+def encodeTags(tags):
+    return ",".join(tags)
+
+def decodeTags(tagsString):
+    return tagsString.split(",")
+
+
 def valIDate(file,id):
     lines = readFile(file)
     
@@ -224,11 +233,12 @@ def valIDate(file,id):
 
 def editEntry(file,id,message,tags,due):
     id = valIDate(file, id)
+    tags = encodeTags(tags)
     due = parseDate(due)
     buffer = readFile(file)
 
-    id = id - 1
-    buffer[id] = f"{message}|{tags}|{due}\n"
+    id = id - 1 # adjust index to be zero indexed
+    buffer[id] = f"{message}|{tags}|{due}||\n"
 
     writeFile(file,buffer)
 
@@ -237,31 +247,49 @@ def deleteEntry(file,id):
     id = valIDate(file,id)
     buffer = readFile(file)
 
-    id = id - 1
+    id = id - 1 # adjust index to be zero indexed
     del buffer[id]
 
     writeFile(file,buffer)
 
 
 def parseLine(line):
-    return line
+    buffer = line.split("|")
+    buffer[1] = decodeTags(buffer[1])
+    return buffer
 
 
-def completeEntry(file,historyFile,id):
+def completeEntry(file,historyFile,id,isRestore):
     id = valIDate(file,id)
     buffer = readFile(file)
 
     deleteEntry(file,id)
 
-    print(parseLine(buffer[id-1])) # parseLine() parses the line and gathers message, tags, and due
+    parsed = parseLine(buffer[id-1])
+
+    message = parsed[0]
+    tags = parsed[1]
+    due = parsed[2]
+
+    if isRestore:
+        completed = ""
+    else:
+        completed = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    addEntry(historyFile,message,tags,due,completed)
 
 
-def addEntry(file,message,tags,due):
+def addEntry(file,message,tags,due,completed):
+    tags = encodeTags(tags)
     due = parseDate(due)
-    buffer = f"{message}|{tags}|{due}\n"
+    buffer = f"{message}|{tags}|{due}|{completed}|\n"
 
     with open(file, 'a') as f:
         f.write(buffer)
+
+
+def dotList(file,filter):
+    pass
 
 
 # framework
@@ -278,10 +306,18 @@ rich.print(f"[bright_green]message {messageIn}")
 
 match operationIn:
     case "add":
-        addEntry(TASK_FILE,messageIn,tagsIn,dueIn)
+        addEntry(TASK_FILE,messageIn,tagsIn,dueIn,"")
     case "done":
-        completeEntry(TASK_FILE,HISTORY_FILE,idIn)
+        completeEntry(TASK_FILE,HISTORY_FILE,idIn,False)
     case "delete":
         deleteEntry(TASK_FILE,idIn)
     case "edit":
         editEntry(TASK_FILE,idIn,messageIn,tagsIn,dueIn)
+    case "list":
+        dotList(TASK_FILE,listOperation)
+    case "history restore":
+        completeEntry(HISTORY_FILE,TASK_FILE,idIn,True)
+    case "history delete":
+        deleteEntry(HISTORY_FILE,idIn)
+    case "history list":
+        dotList(HISTORY_FILE,listOperation)
