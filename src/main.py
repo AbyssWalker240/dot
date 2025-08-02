@@ -18,7 +18,7 @@ HISTORY_FILE = f"{HOME}/.dot/dothistory"
 # defintions
 
 def help():
-    rich.print("[reverse bold] dot [/reverse bold] todo list")
+    rich.print("\n[reverse bold] dot [/reverse bold] todo list")
     rich.print("\nby [bright_blue underline]https://github.com/AbyssWalker240\n")
 
     rich.print("Available operations[bright_green bold]:\n")
@@ -38,7 +38,7 @@ def help():
     rich.print("[white]    [bright_green bold]-[/bright_green bold] restore/uncomplete an entry")
     rich.print("[bright_white]  dot history delete [bright_green bold]<id>")
     rich.print("[white]    [bright_green bold]-[/bright_green bold] delete an entry from history")
-    rich.print("[bright_white]  dot history [not bold white]list \\[all|on-time|overdue] \\[@one @or @more @tags]")
+    rich.print("[bright_white]  dot history [not bold white]list \\[all|ontime|overdue] \\[@one @or @more @tags]")
     rich.print("[white]    [bright_green bold]-[/bright_green bold] list entry history based on details\n")
 
     rich.print("[bright_yellow bold]Note: [bright_white not bold]no message or tag may contain a pipe [b]|[/b] symbol\n")
@@ -68,9 +68,8 @@ messageIn: str = ""
 tagsIn: list = []
 dueIn: str = ""
 listIn: str = ""
-isList: bool = False
-isHistoryList: bool = False
 listOperation: str = ""
+compact: bool = False
 def parse():
     global operationIn
     global idIn
@@ -78,9 +77,11 @@ def parse():
     global tagsIn
     global dueIn
     global listIn
-    global isList
-    global isHistoryList
     global listOperation
+    global compact
+    
+    isList = False
+    isHistoryList = False
     
     args = sys.argv
 
@@ -92,6 +93,9 @@ def parse():
         elif(args[i] == "-d"):
             dueIn = getItem(args,i+1)
             del args[i:i+2]
+        elif(args[i] == "-c"):
+            compact = True
+            del args[i]
     tagsIn.reverse()
         
     
@@ -154,6 +158,7 @@ def parse():
             case "all":
                 listIn = "all" # same as dot
             case "done":
+                operationIn = "history list"
                 listIn = "done" # same as dot history list (all) or dot history
             case "due":
                 listIn = "due" # due soon
@@ -165,8 +170,8 @@ def parse():
         match listOperation:
             case "all":
                 listIn = "all" # same as dot list done or dot history
-            case "on-time":
-                listIn = "on-time" # all completed tasks that were on time
+            case "ontime":
+                listIn = "ontime" # all completed tasks that were on time
             case "overdue":
                 listIn = "overdue" # all completed tasks that were overdue
             case _:
@@ -288,8 +293,101 @@ def addEntry(file,message,tags,due,completed):
         f.write(buffer)
 
 
-def dotList(file,filter):
-    pass
+def printLine(parsedData,line,compact,dueLevel):
+    parsedData[1] = " ".join(parsedData[1])
+
+    match dueLevel:
+        case 0:
+            compactLine = f"[bright_black not bold]Due: {parsedData[2]}"
+            normalLine = f"[bright_green bold] -[bright_white not bold] {parsedData[0]}  [bright_black not bold]Due: {parsedData[2]}\n"
+        case 1:
+            compactLine = f"[bright_black not bold]Due: [yellow italic]{parsedData[2]}"
+            normalLine = f"[bright_green bold] -[bright_white not bold] {parsedData[0]}  [bright_black not bold]Due: {parsedData[2]} [italic yellow]SOON\n"
+        case 2:
+            compactLine = f"[bright_black not bold]Due: [red italic]{parsedData[2]}"
+            normalLine = f"[bright_green bold] -[bright_white not bold] {parsedData[0]}  [red not bold]Due: {parsedData[2]} [bright_red bold italic]OVERDUE\n"
+    
+    if compact:
+        rich.print(f"[bright_yellow bold]{line}) [bright_white not bold]{parsedData[0]}  [green not bold]{parsedData[1]}")
+        rich.print(compactLine)
+    else:
+        rich.print(f"[bright_yellow bold]{line}) [bright_black not bold]Tags: [green not bold]{parsedData[1]}")
+        rich.print(normalLine)
+
+
+def printHistoryLine(parsedData,line,compact,dueLevel):
+    parsedData[1] = " ".join(parsedData[1])
+
+    match dueLevel:
+        case 0:
+            compactLine = f" [bright_green not bold]Completed: {parsedData[3]} [bright_black not bold]Due: {parsedData[2]}"
+            normalLine = f"[bright_green not bold]   Completed: {parsedData[3]}\n"
+        case 1:
+            compactLine = f" [bright_green not bold]Completed: {parsedData[3]} [bright_black not bold]Due: {parsedData[2]}"
+            normalLine = f"[bright_green not bold]   Completed: {parsedData[3]}\n"
+        case 2:
+            compactLine = f" [bright_green not bold]Completed: {parsedData[3]} [red italic]Due: {parsedData[2]}"
+            normalLine = f"[bright_green not bold]   Completed: {parsedData[3]} [red italic]Late\n"
+    
+    if compact:
+        rich.print(f"[bright_yellow bold]{line}) [bright_white not bold]{parsedData[0]}")
+        rich.print(compactLine)
+        rich.print(f" [bright_black not bold]Tags: [green not bold]{parsedData[1]}")
+    else:
+        rich.print(f"[bright_yellow bold]{line}) [bright_black not bold]Tags: [green not bold]{parsedData[1]}")
+        rich.print(f" [bright_green bold]-[bright_white not bold] {parsedData[0]}  [bright_black not bold]Due: {parsedData[2]}")
+        rich.print(normalLine)
+
+
+def dotList(file,filter,operation,compact):
+    buffer = readFile(file)
+
+    now = datetime.datetime.now()
+    in24hours = now + datetime.timedelta(hours=24)
+    
+    if compact:
+        rich.print(f"[reverse bold] dot [/reverse bold] {operation}\n")
+    else:
+        rich.print(f"\n[reverse bold] dot [/reverse bold] {operation}\n")
+
+    match filter:
+        case "all":
+            for i in range(0,len(buffer)):
+                if(operation == "list"):
+                    if(not parseLine(buffer[i])[2] == "NONE" and datetime.datetime.strptime(parseLine(buffer[i])[2], "%Y-%m-%d %H:%M:%S") <= now):
+                        printLine(parseLine(buffer[i]),i+1,compact,2)
+                    elif(not parseLine(buffer[i])[2] == "NONE" and datetime.datetime.strptime(parseLine(buffer[i])[2], "%Y-%m-%d %H:%M:%S") <= in24hours):
+                        printLine(parseLine(buffer[i]),i+1,compact,1)
+                    else:
+                        printLine(parseLine(buffer[i]),i+1,compact,0)
+                else:
+                    if(not parseLine(buffer[i])[2] == "NONE" and datetime.datetime.strptime(parseLine(buffer[i])[2], "%Y-%m-%d %H:%M:%S") <= datetime.datetime.strptime(parseLine(buffer[i])[3], "%Y-%m-%d %H:%M:%S")):
+                        printHistoryLine(parseLine(buffer[i]),i+1,compact,2)
+                    else:
+                        printHistoryLine(parseLine(buffer[i]),i+1,compact,0)
+
+        case "done":
+            for i in range(0,len(buffer)):
+                printHistoryLine(parseLine(buffer[i]),i+1,compact,0)
+
+        case "due":
+            for i in range(0,len(buffer)):
+                if(not parseLine(buffer[i])[2] == "NONE" and datetime.datetime.strptime(parseLine(buffer[i])[2], "%Y-%m-%d %H:%M:%S") <= now):
+                    printLine(parseLine(buffer[i]),i+1,compact,2)
+                elif(not parseLine(buffer[i])[2] == "NONE" and datetime.datetime.strptime(parseLine(buffer[i])[2], "%Y-%m-%d %H:%M:%S") <= in24hours):
+                    printLine(parseLine(buffer[i]),i+1,compact,1)
+
+        case "overdue":
+            for i in range(0,len(buffer)):
+                if(not parseLine(buffer[i])[2] == "NONE" and operation == "list" and datetime.datetime.strptime(parseLine(buffer[i])[2], "%Y-%m-%d %H:%M:%S") < now):
+                    printLine(parseLine(buffer[i]),i+1,compact,2)
+                elif(not parseLine(buffer[i])[2] == "NONE" and operation == "history list" and not parseLine(buffer[i])[2] == "NONE" and datetime.datetime.strptime(parseLine(buffer[i])[2], "%Y-%m-%d %H:%M:%S") < datetime.datetime.strptime(parseLine(buffer[i])[3], "%Y-%m-%d %H:%M:%S")):
+                    printHistoryLine(parseLine(buffer[i]),i+1,compact,2)
+
+        case "ontime":
+            for i in range(0,len(buffer)):
+                if(not parseLine(buffer[i])[2] == "NONE" and datetime.datetime.strptime(parseLine(buffer[i])[2], "%Y-%m-%d %H:%M:%S") >= datetime.datetime.strptime(parseLine(buffer[i])[3], "%Y-%m-%d %H:%M:%S")):
+                    printHistoryLine(parseLine(buffer[i]),i+1,compact,0)
 
 
 # framework
@@ -298,8 +396,8 @@ parse()
 
 validateData()
 
-rich.print(f"[green]operation {operationIn}\nid {idIn}\ntags {tagsIn}\ndue {dueIn}\nlist {listIn}")
-rich.print(f"[bright_green]message {messageIn}")
+# rich.print(f"[green]operation {operationIn}\nid {idIn}\ntags {tagsIn}\ndue {dueIn}\nlist {listIn}")
+# rich.print(f"[bright_green]message {messageIn}")
 # print(isList)
 # print(isHistoryList)
 # print(listOperation)
@@ -314,10 +412,10 @@ match operationIn:
     case "edit":
         editEntry(TASK_FILE,idIn,messageIn,tagsIn,dueIn)
     case "list":
-        dotList(TASK_FILE,listOperation)
+        dotList(TASK_FILE,listOperation,operationIn,compact)
     case "history restore":
         completeEntry(HISTORY_FILE,TASK_FILE,idIn,True)
     case "history delete":
         deleteEntry(HISTORY_FILE,idIn)
     case "history list":
-        dotList(HISTORY_FILE,listOperation)
+        dotList(HISTORY_FILE,listOperation,operationIn,compact)

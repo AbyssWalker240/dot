@@ -15,7 +15,7 @@ dot list \[all|done|due|overdue\] @
 dot history restore \[id\]
 dot history delete  \[id\]
 
-dot history list \[all|on-time|overdue\] @
+dot history list \[all|ontime|overdue\] @
 ```
 
 ## dependencies
