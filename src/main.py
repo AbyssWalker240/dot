@@ -116,7 +116,7 @@ def parse():
         del args[1]
 
     match operationIn:
-        case "help":
+        case "help" | "--help":
             help()
             sys.exit(0)
         case "add":
