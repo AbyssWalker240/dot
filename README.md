@@ -2,25 +2,9 @@
 
 CLI todo list written in python
 
-## planned features/commands
-
-```
-dot add           "" @ -d \[date\]
-dot done   \[id\]
-dot delete \[id\]
-dot edit   \[id\] "" @ -d \[date\]
-
-dot list \[all|done|due|overdue\] @
-
-dot history restore \[id\]
-dot history delete  \[id\]
-
-dot history list \[all|ontime|overdue\] @
-```
-
 ## dependencies
 
-### archlinux
+### arch linux
 * python3           (core)
 * python-rich       (extra)
 * python-dateparser (extra)

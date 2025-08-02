@@ -344,12 +344,16 @@ def dotList(file,filter,operation,compact):
 
     now = datetime.datetime.now()
     in24hours = now + datetime.timedelta(hours=24)
-    
+
     if compact:
         rich.print(f"[reverse bold] dot [/reverse bold] {operation}\n")
     else:
         rich.print(f"\n[reverse bold] dot [/reverse bold] {operation}\n")
 
+    if(len(buffer) == 0):
+        rich.print("[bright_black italic] crickets...\n")
+        return
+    
     match filter:
         case "all":
             for i in range(0,len(buffer)):
