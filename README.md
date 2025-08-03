@@ -25,4 +25,4 @@ Uses these python packages:
 
 **--OR--**
 
-2) I recommend making a symbolic link in '\~/.local/bin/' that points to the script in 'src/', which will enable update by performing ``git pull``
+2) I recommend making a symbolic link in '\~/.local/bin/' that points to the script in 'src/', which will enable updating by performing ``git pull``
