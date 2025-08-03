@@ -4,15 +4,25 @@ CLI todo list written in python
 
 ## dependencies
 
+Written in Python 3.13.5
+
+Uses these python packages:
+* rich - for pretty terminal output
+* dateparser - to specify dates with natural language
+
 ### arch linux
-* python3           (core)
+* python            (core)
 * python-rich       (extra)
 * python-dateparser (extra)
 
+``pacman -Syu python python-rich python-dateparser``
+
 ## installation
 
-* curl auto-install.sh run with bash, which will clone correct \[os\]-install.sh for system and run it
+* ``git clone https://github.com/AbyssWalker240/dot.git``
 
-## uninstallation
+* Copy/move 'src/dot' into '\~/.local/bin/dot'
 
-* curl uninstall.sh run with bash, which will prompt to see if user wants to delete all files or just scripts
+**--OR--**
+
+* I recommend making a symbolic link in '\~/.local/bin/' that points to the script in 'src/', which will enable update by performing ``git pull``
