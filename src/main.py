@@ -394,32 +394,36 @@ def dotList(file,filter,operation,compact):
                     printHistoryLine(parseLine(buffer[i]),i+1,compact,0)
 
 
+def echo(message,content,message2):
+    rich.print(f"\n[reverse bold] dot [green not bold not reverse] {message}[bright_white italic]{content}[green not bold]{message2}\n")
+
+
 # framework
 
 parse()
 
 validateData()
 
-# rich.print(f"[green]operation {operationIn}\nid {idIn}\ntags {tagsIn}\ndue {dueIn}\nlist {listIn}")
-# rich.print(f"[bright_green]message {messageIn}")
-# print(isList)
-# print(isHistoryList)
-# print(listOperation)
-
 match operationIn:
     case "add":
         addEntry(TASK_FILE,messageIn,tagsIn,dueIn,"")
+        echo("Added entry '",messageIn,"'")
     case "done":
         completeEntry(TASK_FILE,HISTORY_FILE,idIn,False)
+        echo("Completed entry ",idIn,"")
     case "delete":
         deleteEntry(TASK_FILE,idIn)
+        echo("Deleted entry ",idIn,"")
     case "edit":
         editEntry(TASK_FILE,idIn,messageIn,tagsIn,dueIn)
+        echo("Edited entry ",idIn,"")
     case "list":
         dotList(TASK_FILE,listOperation,operationIn,compact)
     case "history restore":
         completeEntry(HISTORY_FILE,TASK_FILE,idIn,True)
+        echo("Restored entry ",idIn,"")
     case "history delete":
         deleteEntry(HISTORY_FILE,idIn)
+        echo("Deleted history ",idIn,"")
     case "history list":
         dotList(HISTORY_FILE,listOperation,operationIn,compact)
