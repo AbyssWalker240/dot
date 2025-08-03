@@ -19,10 +19,10 @@ Uses these python packages:
 
 ## installation
 
-* ``git clone https://github.com/AbyssWalker240/dot.git``
+1) ``git clone https://github.com/AbyssWalker240/dot.git``
 
-* Copy/move 'src/dot' into '\~/.local/bin/dot'
+2) Copy/move 'src/dot' into '\~/.local/bin/dot'
 
 **--OR--**
 
-* I recommend making a symbolic link in '\~/.local/bin/' that points to the script in 'src/', which will enable update by performing ``git pull``
+2) I recommend making a symbolic link in '\~/.local/bin/' that points to the script in 'src/', which will enable update by performing ``git pull``
